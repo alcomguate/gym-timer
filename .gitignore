@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Android build artifacts (keep source, ignore compiled output)
+android/build/
+android/.gradle/
+android/app/build/
+android/local.properties
+android/.idea/
+android/*.iml
+android/captures/
+android/.externalNativeBuild/
+android/.cxx/
+
+# Capacitor iOS (if added in the future)
+ios/
+
+# Env / secrets
+.env
+.env.local
+.env.*.local
+*.keystore
+*.jks
+
+# Editor
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS
+.DS_Store
+Thumbs.db
