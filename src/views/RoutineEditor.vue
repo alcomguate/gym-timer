@@ -150,6 +150,107 @@
         </div>
       </section>
 
+      <!-- Image references -->
+      <section class="bg-[#1c1c1e] rounded-2xl p-5 border border-[#2c2c2e] space-y-4">
+        <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Fotos de referencia</h3>
+
+        <div class="grid grid-cols-3 gap-2">
+          <div
+            v-for="(img, i) in previewImages"
+            :key="img.id"
+            class="relative aspect-square"
+          >
+            <img
+              :src="img.url"
+              class="w-full h-full object-cover rounded-xl cursor-pointer active:opacity-80 transition-opacity"
+              @click.stop="openPreview(i)"
+            />
+            <button
+              @click="removeImage(i)"
+              class="absolute top-1 right-1 w-6 h-6 bg-black/70 rounded-full flex items-center justify-center active:scale-90 transition-transform"
+            >
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <button
+            v-if="previewImages.length < 5"
+            @click="fileInput.click()"
+            class="aspect-square bg-[#2c2c2e] rounded-xl flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform border-2 border-dashed border-[#3c3c3e]"
+          >
+            <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            <span class="text-gray-600 text-xs">Añadir</span>
+          </button>
+        </div>
+
+        <input
+          ref="fileInput"
+          type="file"
+          accept="image/*"
+          multiple
+          capture="environment"
+          class="hidden"
+          @change="handleImageSelect"
+        />
+        <p class="text-gray-700 text-xs">Ejercicios, postura, etc. · Máx. 5 fotos</p>
+        <ImageLightbox v-model="lightboxOpen" :urls="previewImages.map(p => p.url)" :startIndex="lightboxIndex" />
+      </section>
+
+      <!-- Video links -->
+      <section class="bg-[#1c1c1e] rounded-2xl p-5 border border-[#2c2c2e] space-y-4">
+        <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Videos / Referencias</h3>
+
+        <div>
+          <div class="flex gap-2">
+            <input
+              v-model="newVideoUrl"
+              type="url"
+              placeholder="Pega un link de YouTube, TikTok…"
+              class="flex-1 bg-[#2c2c2e] border border-[#3c3c3e] rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-red-500 text-sm"
+              @keydown.enter.prevent="addVideoLink"
+            />
+            <button
+              @click="addVideoLink"
+              class="w-12 h-12 bg-[#2c2c2e] rounded-xl flex items-center justify-center active:scale-90 transition-transform flex-shrink-0"
+              :class="{ 'opacity-40 pointer-events-none': form.videoLinks.length >= 5 }"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+              </svg>
+            </button>
+          </div>
+          <p v-if="urlError" class="text-red-500 text-xs mt-1.5">{{ urlError }}</p>
+          <p v-else class="text-gray-700 text-xs mt-1.5">YouTube · TikTok · Facebook · Instagram · Máx. 5</p>
+        </div>
+
+        <div v-if="form.videoLinks.length" class="space-y-2">
+          <div
+            v-for="(url, i) in form.videoLinks"
+            :key="i"
+            class="flex items-center gap-3 bg-[#2c2c2e] rounded-xl px-3 py-2.5"
+          >
+            <span
+              class="text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0"
+              :style="{ backgroundColor: detectPlatform(url)?.color + '33', color: detectPlatform(url)?.color }"
+            >{{ detectPlatform(url)?.name }}</span>
+            <span class="text-gray-400 text-xs truncate flex-1">{{ url }}</span>
+            <button
+              @click="removeVideoLink(i)"
+              class="text-gray-600 active:text-red-500 transition-colors flex-shrink-0 p-1"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+        <p v-else class="text-gray-700 text-sm">Sin videos añadidos</p>
+      </section>
+
       <!-- Summary card -->
       <section class="bg-[#1c1c1e] rounded-2xl p-5 border border-[#2c2c2e]">
         <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Resumen</h3>
@@ -191,10 +292,12 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useRoutinesStore } from '../stores/routines.js'
 import TimeInput from '../components/TimeInput.vue'
+import ImageLightbox from '../components/ImageLightbox.vue'
+import { saveImage, getImageUrl, deleteImage } from '../composables/useImageStore.js'
 
 const router = useRouter()
 const route  = useRoute()
@@ -215,18 +318,94 @@ const form = ref({
   color: '#ef4444',
   emoji: '🔥',
   group: '',
+  videoLinks: [],
+  imageIds: [],
 })
+
+// { id, url } pairs — url is a temporary object URL for preview
+const previewImages = ref([])
+const fileInput = ref(null)
+
+onUnmounted(() => {
+  previewImages.value.forEach(p => URL.revokeObjectURL(p.url))
+})
+
+async function handleImageSelect(e) {
+  const files = Array.from(e.target.files)
+  for (const file of files) {
+    if (previewImages.value.length >= 5) break
+    const id = await saveImage(file)
+    const url = await getImageUrl(id)
+    previewImages.value.push({ id, url })
+    form.value.imageIds.push(id)
+  }
+  e.target.value = ''
+}
+
+async function removeImage(i) {
+  const { id, url } = previewImages.value[i]
+  URL.revokeObjectURL(url)
+  previewImages.value.splice(i, 1)
+  form.value.imageIds.splice(i, 1)
+  await deleteImage(id)
+}
+
+const lightboxOpen = ref(false)
+const lightboxIndex = ref(0)
+
+function openPreview(i) {
+  lightboxIndex.value = i
+  lightboxOpen.value = true
+}
+
+const newVideoUrl = ref('')
+const urlError = ref('')
+
+function detectPlatform(url) {
+  if (/youtube\.com|youtu\.be/.test(url)) return { name: 'YouTube', color: '#ff0000' }
+  if (/tiktok\.com/.test(url))             return { name: 'TikTok',   color: '#69c9d0' }
+  if (/facebook\.com|fb\.com|fb\.watch/.test(url)) return { name: 'Facebook', color: '#1877f2' }
+  if (/instagram\.com/.test(url))          return { name: 'Instagram', color: '#e1306c' }
+  return null
+}
+
+function addVideoLink() {
+  urlError.value = ''
+  const url = newVideoUrl.value.trim()
+  if (!url) return
+  if (form.value.videoLinks.length >= 5) {
+    urlError.value = 'Máximo 5 videos por rutina'
+    return
+  }
+  if (!detectPlatform(url)) {
+    urlError.value = 'Solo se aceptan links de YouTube, TikTok, Facebook o Instagram'
+    return
+  }
+  form.value.videoLinks.push(url)
+  newVideoUrl.value = ''
+}
+
+function removeVideoLink(i) {
+  form.value.videoLinks.splice(i, 1)
+}
 
 function toggleGroup(value) {
   form.value.group = form.value.group === value ? '' : value
 }
 
-onMounted(() => {
+onMounted(async () => {
   if (!isNew.value) {
     const r = store.getById(route.params.id)
-    if (r) Object.assign(form.value, { ...r })
+    if (r) {
+      Object.assign(form.value, { ...r, imageIds: [...(r.imageIds ?? [])] })
+      if (form.value.imageIds.length) {
+        const loaded = await Promise.all(
+          form.value.imageIds.map(async id => ({ id, url: await getImageUrl(id) }))
+        )
+        previewImages.value = loaded.filter(p => p.url)
+      }
+    }
   } else if (route.query.workTime) {
-    // Pre-fill from Quick Timer "Guardar como rutina"
     form.value.workTime = +route.query.workTime
     form.value.restTime = +route.query.restTime
     form.value.rounds   = +route.query.rounds
@@ -255,8 +434,10 @@ function save() {
   router.back()
 }
 
-function confirmDelete() {
+async function confirmDelete() {
   if (confirm('¿Eliminar esta rutina?')) {
+    const r = store.getById(route.params.id)
+    if (r?.imageIds?.length) await Promise.all(r.imageIds.map(id => deleteImage(id)))
     store.remove(route.params.id)
     router.replace('/')
   }

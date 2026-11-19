@@ -7,12 +7,13 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "apk": "npm run build && npx cap sync android && cd android && gradlew.bat assembleDebug",
-    "apk:release": "npm run build && npx cap sync android && cd android && gradlew.bat assembleRelease",
+    "apk": "npm run build && npx cap sync android && cd android && .\\gradlew.bat assembleDebug",
+    "apk:release": "npm run build && npx cap sync android && cd android && .\\gradlew.bat assembleRelease",
     "assets": "node scripts/gen-assets.mjs && npx capacitor-assets generate --android"
   },
   "dependencies": {
     "@capacitor/android": "^8.6.2",
+    "@capacitor/app": "^8.1.2",
     "@capacitor/cli": "^8.6.2",
     "@capacitor/core": "^8.6.2",
     "pinia": "^2.1.7",

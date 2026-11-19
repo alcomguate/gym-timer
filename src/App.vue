@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-[#0a0a0a] text-white max-w-[428px] mx-auto relative overflow-x-hidden">
+  <div class="min-h-screen bg-[#0a0a0a] text-white max-w-[428px] mx-auto relative overflow-x-clip">
     <router-view v-slot="{ Component }">
       <transition name="slide" mode="out-in">
         <component :is="Component" />
@@ -7,6 +7,19 @@
     </router-view>
   </div>
 </template>
+
+<script setup>
+import { watch } from 'vue'
+import { useSettingsStore } from './stores/settings.js'
+
+const settings = useSettingsStore()
+
+function applyTheme(t) {
+  document.documentElement.classList.toggle('theme-light', t === 'light')
+}
+applyTheme(settings.theme)
+watch(() => settings.theme, applyTheme)
+</script>
 
 <style>
 .slide-enter-active,

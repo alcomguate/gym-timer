@@ -12,8 +12,8 @@
           </svg>
         </button>
         <div>
-          <h1 class="text-2xl font-black">Peso Corporal</h1>
-          <p class="text-gray-600 text-xs mt-0.5">{{ entries.length }} medición{{ entries.length !== 1 ? 'es' : '' }}</p>
+          <h1 class="text-2xl font-black">{{ t('weight.title') }}</h1>
+          <p class="text-gray-600 text-xs mt-0.5">{{ t('weight.measures', entries.length) }}</p>
         </div>
       </div>
       <button
@@ -33,25 +33,25 @@
       <div v-if="latest" class="grid grid-cols-3 gap-2">
         <div class="bg-[#1c1c1e] rounded-2xl p-4 border border-[#2c2c2e] text-center col-span-1">
           <p class="text-blue-400 text-2xl font-black">{{ latest.weight }}</p>
-          <p class="text-gray-600 text-xs mt-0.5">{{ unit }} actual</p>
+          <p class="text-gray-600 text-xs mt-0.5">{{ t('weight.unit.actual', unit) }}</p>
         </div>
         <div class="bg-[#1c1c1e] rounded-2xl p-4 border border-[#2c2c2e] text-center col-span-1">
           <p class="text-2xl font-black" :class="deltaClass">
             {{ delta !== null ? (delta > 0 ? '+' : '') + delta : '—' }}
           </p>
-          <p class="text-gray-600 text-xs mt-0.5">vs anterior</p>
+          <p class="text-gray-600 text-xs mt-0.5">{{ t('weight.vs') }}</p>
         </div>
         <div class="bg-[#1c1c1e] rounded-2xl p-4 border border-[#2c2c2e] text-center col-span-1">
           <p class="text-white text-2xl font-black">{{ entries.length }}</p>
-          <p class="text-gray-600 text-xs mt-0.5">registros</p>
+          <p class="text-gray-600 text-xs mt-0.5">{{ t('weight.records') }}</p>
         </div>
       </div>
 
       <!-- Chart -->
       <div v-if="chartEntries.length >= 2" class="bg-[#1c1c1e] rounded-2xl p-4 border border-[#2c2c2e]">
         <div class="flex items-center justify-between mb-3">
-          <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Tendencia</h3>
-          <span class="text-xs text-gray-700">últimas {{ Math.min(chartEntries.length, 20) }} mediciones</span>
+          <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ t('weight.trend') }}</h3>
+          <span class="text-xs text-gray-700">{{ t('weight.last', Math.min(chartEntries.length, 20)) }}</span>
         </div>
         <WeightChart :data="chartEntries" color="#3b82f6" />
       </div>
@@ -59,19 +59,19 @@
       <!-- Empty state -->
       <div v-if="entries.length === 0" class="flex flex-col items-center justify-center h-56 text-center">
         <div class="text-6xl mb-4">⚖️</div>
-        <p class="text-gray-400 text-lg font-semibold">Sin mediciones</p>
-        <p class="text-gray-600 text-sm mt-1">Registra tu peso para ver la evolución</p>
+        <p class="text-gray-400 text-lg font-semibold">{{ t('weight.empty') }}</p>
+        <p class="text-gray-600 text-sm mt-1">{{ t('weight.empty.sub') }}</p>
         <button
           @click="$router.push('/weight/add')"
           class="mt-5 px-8 py-3 bg-blue-500 rounded-xl font-black active:scale-95 transition-transform"
         >
-          PRIMERA MEDICIÓN
+          {{ t('weight.first') }}
         </button>
       </div>
 
       <!-- Entries list -->
       <div v-if="entries.length > 0">
-        <h3 class="text-xs font-semibold text-gray-600 uppercase tracking-wider px-1 mb-2">Historial</h3>
+        <h3 class="text-xs font-semibold text-gray-600 uppercase tracking-wider px-1 mb-2">{{ t('weight.history') }}</h3>
         <div class="space-y-2">
           <div
             v-for="(e, idx) in entries"
@@ -129,10 +129,12 @@ import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useWeightStore } from '../stores/weight.js'
 import WeightChart from '../components/WeightChart.vue'
+import { useI18n } from '../composables/useI18n.js'
 
 const router = useRouter()
 const store  = useWeightStore()
 const { entries, unit, latest, delta, chartEntries } = storeToRefs(store)
+const { t, language } = useI18n()
 
 const deltaClass = computed(() => {
   if (delta.value === null) return 'text-gray-600'
@@ -142,17 +144,19 @@ const deltaClass = computed(() => {
 })
 
 function fmtDate(d) {
-  return new Date(d + 'T00:00:00').toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' })
+  const loc = language.value === 'en' ? 'en' : 'es'
+  return new Date(d + 'T00:00:00').toLocaleDateString(loc, { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
 function relativeDate(d) {
   const today = new Date().toISOString().slice(0, 10)
   const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
-  if (d === today)     return 'Hoy'
-  if (d === yesterday) return 'Ayer'
+  if (d === today)     return t('weight.relative.today')
+  if (d === yesterday) return t('weight.relative.yesterday')
   const diff = Math.round((new Date(today) - new Date(d)) / 86400000)
-  if (diff < 7) return `Hace ${diff} días`
-  return new Date(d + 'T00:00:00').toLocaleDateString('es', { weekday: 'short', day: 'numeric', month: 'short' })
+  if (diff < 7) return t('weight.relative.days', diff)
+  const loc = language.value === 'en' ? 'en' : 'es'
+  return new Date(d + 'T00:00:00').toLocaleDateString(loc, { weekday: 'short', day: 'numeric', month: 'short' })
 }
 
 function diffStr(curr, prev) {
@@ -162,7 +166,7 @@ function diffStr(curr, prev) {
 }
 
 function confirmDelete(e) {
-  if (confirm(`¿Eliminar la medición del ${fmtDate(e.date)}?`)) {
+  if (confirm(t('weight.delete.confirm', fmtDate(e.date)))) {
     store.remove(e.id)
   }
 }

@@ -11,8 +11,8 @@
         </svg>
       </button>
       <div>
-        <h1 class="text-2xl font-black leading-tight">Inicio Rápido</h1>
-        <p class="text-gray-600 text-xs mt-0.5">Sin guardar · los valores se recuerdan</p>
+        <h1 class="text-2xl font-black leading-tight">{{ t('quick.title') }}</h1>
+        <p class="text-gray-600 text-xs mt-0.5">{{ t('quick.subtitle') }}</p>
       </div>
     </header>
 
@@ -21,14 +21,14 @@
       <section class="bg-[#1c1c1e] rounded-2xl p-5 border border-[#2c2c2e] space-y-6">
         <TimeInput
           v-model="form.workTime"
-          label="Tiempo de Trabajo"
+          :label="t('editor.workTime')"
           color="#ef4444"
           :min="1"
           :max="300"
         />
         <TimeInput
           v-model="form.restTime"
-          label="Tiempo de Descanso"
+          :label="t('editor.restTime')"
           color="#4ade80"
           :min="0"
           :max="300"
@@ -37,7 +37,7 @@
         <!-- Rounds -->
         <div>
           <div class="flex items-center justify-between mb-2">
-            <label class="text-sm text-gray-400">Rondas</label>
+            <label class="text-sm text-gray-400">{{ t('editor.rounds') }}</label>
             <span class="text-2xl font-black text-amber-400">{{ form.rounds }}</span>
           </div>
           <div class="flex items-center gap-2">
@@ -60,11 +60,11 @@
       <div class="grid grid-cols-3 gap-2 text-center">
         <div class="bg-[#1c1c1e] rounded-xl py-3 border border-[#2c2c2e]">
           <p class="text-red-400 text-xl font-black">{{ form.workTime }}s</p>
-          <p class="text-gray-600 text-xs mt-0.5">trabajo</p>
+          <p class="text-gray-600 text-xs mt-0.5">{{ t('routine.work') }}</p>
         </div>
         <div class="bg-[#1c1c1e] rounded-xl py-3 border border-[#2c2c2e]">
           <p class="text-green-400 text-xl font-black">{{ form.restTime }}s</p>
-          <p class="text-gray-600 text-xs mt-0.5">descanso</p>
+          <p class="text-gray-600 text-xs mt-0.5">{{ t('routine.rest') }}</p>
         </div>
         <div class="bg-[#1c1c1e] rounded-xl py-3 border border-[#2c2c2e]">
           <p class="text-white text-xl font-black">{{ formatDuration(totalSecs) }}</p>
@@ -84,7 +84,7 @@
           <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
             <path d="M8 5v14l11-7z" />
           </svg>
-          INICIAR AHORA
+          {{ t('quick.start') }}
         </button>
 
         <button
@@ -95,7 +95,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
           </svg>
-          Guardar como rutina
+          {{ t('quick.save') }}
         </button>
       </div>
     </main>
@@ -107,9 +107,11 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useRoutinesStore } from '../stores/routines.js'
 import TimeInput from '../components/TimeInput.vue'
+import { useI18n } from '../composables/useI18n.js'
 
 const router = useRouter()
 const store  = useRoutinesStore()
+const { t } = useI18n()
 
 // Pre-fill with last used quick values
 const form = ref({

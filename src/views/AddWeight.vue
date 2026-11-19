@@ -10,8 +10,8 @@
         </svg>
       </button>
       <div>
-        <h1 class="text-2xl font-black">Registrar Peso</h1>
-        <p class="text-gray-600 text-xs mt-0.5">{{ isEdit ? 'Editar medición existente' : 'Nueva medición' }}</p>
+        <h1 class="text-2xl font-black">{{ t('addweight.title') }}</h1>
+        <p class="text-gray-600 text-xs mt-0.5">{{ isEdit ? t('addweight.subtitle.edit') : t('addweight.subtitle.new') }}</p>
       </div>
     </header>
 
@@ -64,7 +64,7 @@
 
       <!-- Date -->
       <section class="bg-[#1c1c1e] rounded-2xl p-5 border border-[#2c2c2e] space-y-3">
-        <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Fecha</h3>
+        <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ t('addweight.date') }}</h3>
 
         <!-- Quick date chips -->
         <div class="flex gap-2">
@@ -87,11 +87,11 @@
 
       <!-- Notes -->
       <section class="bg-[#1c1c1e] rounded-2xl p-5 border border-[#2c2c2e]">
-        <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Notas <span class="text-gray-700 normal-case font-normal">(opcional)</span></h3>
+        <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">{{ t('addweight.notes') }} <span class="text-gray-700 normal-case font-normal">{{ t('addweight.notes.opt') }}</span></h3>
         <input
           v-model="form.notes"
           type="text"
-          placeholder="Ej. En ayunas, después de entrenar…"
+          :placeholder="t('addweight.notes.ph')"
           maxlength="80"
           class="w-full bg-[#2c2c2e] border border-[#3c3c3e] rounded-xl px-4 py-3 text-white placeholder-gray-700 focus:outline-none focus:border-blue-500 text-sm"
         />
@@ -104,7 +104,7 @@
         class="w-full py-4 rounded-2xl font-black text-lg active:scale-[0.98] transition-transform"
         style="background-color:#3b82f6; box-shadow: 0 6px 20px rgba(59,130,246,0.4);"
       >
-        GUARDAR MEDICIÓN
+        {{ t('addweight.save') }}
       </button>
     </main>
   </div>
@@ -114,10 +114,12 @@
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useWeightStore } from '../stores/weight.js'
+import { useI18n } from '../composables/useI18n.js'
 
 const router = useRouter()
 const route  = useRoute()
 const store  = useWeightStore()
+const { t } = useI18n()
 
 function todayStr() {
   return new Date().toISOString().slice(0, 10)
@@ -151,14 +153,14 @@ function change(delta) {
 }
 
 const dateChips = computed(() => [
-  { label: 'Hoy',    value: today },
-  { label: 'Ayer',   value: offsetDay(-1) },
-  { label: 'Antes',  value: offsetDay(-2) },
+  { label: t('addweight.today'),     value: today },
+  { label: t('addweight.yesterday'), value: offsetDay(-1) },
+  { label: t('addweight.before'),    value: offsetDay(-2) },
 ])
 
 function save() {
   if (!weight.value || weight.value < 10) {
-    alert('Ingresa un peso válido')
+    alert(t('addweight.required'))
     return
   }
   store.add({ date: form.value.date, weight: weight.value, notes: form.value.notes })
